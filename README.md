@@ -89,8 +89,11 @@ GPU: NVIDIA GeForce RTX 3050 Laptop GPU
 Dataset: Wiki-Vote
 
  Implementation      | Kernel time (ms) | Total time (ms) | Correctness
+ 
  Vertex-centric Push | 0.905056 | 10.0621 | PASSED |
+ 
  Vertex-centric Pull | 0.546656 | 6.40812 | PASSED |
+ 
  Edge-centric        | 0.208896 | 7.98741 | PASSED |
 
 These are preliminary single-run measurements after one warm-up execution of each implementation. They are not statistically conclusive.
