@@ -1,0 +1,17 @@
+# Compiled object files
+*.o
+
+# Compiled executables in project root
+/bfs_cpu
+/bfs_gpu
+/bfs_pull
+/bfs_edge
+/bfs_benchmark
+/graph_test
+
+# Original downloaded dataset files
+/data/wiki-Vote.txt
+/data/wiki-Vote.txt.gz
+
+# Temporary logs
+*.log
