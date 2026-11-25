@@ -15,3 +15,6 @@
 
 # Temporary logs
 *.log
+
+# SSSP executable
+/sssp_benchmark

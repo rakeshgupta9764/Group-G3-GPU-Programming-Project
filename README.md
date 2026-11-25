@@ -35,7 +35,7 @@ GPU edge-centric | COO |
 
 All three GPU implementations have been validated against the CPU reference.
 
-SSSP and PageRank are planned but not yet implemented.
+PageRank implementation is not yet included.
 
 ## Dataset
 
@@ -100,3 +100,56 @@ These are preliminary single-run measurements after one warm-up execution of eac
 
 Kernel time is accumulated GPU kernel execution time. Total time includes GPU allocation, transfers, synchronization and cleanup. Graph loading and graph-format construction are excluded.
 
+
+## Single-Source Shortest Paths (SSSP)
+
+SSSP is implemented using the Bellman-Ford algorithm.
+
+### Implementations
+
+Implementation | Graph representation |
+
+
+CPU Bellman-Ford reference | Edge list |
+
+GPU Vertex-centric Push | CSR |
+
+GPU Edge-centric | COO |
+
+The GPU implementations use synchronous iterations with separate distance arrays. Atomic minimum operations handle concurrent updates to destination vertices.
+
+### Weighted Dataset
+
+The SSSP benchmark uses the Wiki-Vote graph topology with deterministic synthetic edge weights from 1 to 10.
+
+- Vertices: 7,115
+- Directed edges: 103,689
+- Weight range: 1 to 10
+
+These weights are synthetic and are not part of the original Wiki-Vote dataset.
+
+### Preliminary SSSP Results
+
+GPU: NVIDIA GeForce RTX 3050 Laptop GPU
+
+Implementation | Kernel time (ms) | Total time (ms) | Correctness |
+
+
+GPU Vertex-centric Push | 2.17466 | 4.48858 | PASSED |
+
+GPU Edge-centric | 0.249792 | 2.3073 | PASSED |
+
+Both GPU implementations matched the CPU Bellman-Ford reference.
+
+These are preliminary measurements from a single run after GPU warm-up, not statistically conclusive performance results.
+
+### Compilation and Execution
+
+    nvcc -std=c++17 -arch=sm_86 -Iinclude \
+    src/graph.cpp src/sssp_cpu.cpp \
+    src/sssp.cu src/sssp_benchmark.cpp \
+    -o sssp_benchmark
+
+    ./sssp_benchmark data/sssp_tiny_graph.txt 0
+
+    ./sssp_benchmark data/wiki_vote_weighted.txt 0
