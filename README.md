@@ -1,7 +1,6 @@
-
 # GPU Graph Algorithm Performance Evaluation
 
-**Course:** CS5658 - GPU Programming
+**Course:** CS5658 - GPU Programming  
 **Group:** G3
 
 ## Team Members
@@ -9,147 +8,281 @@
 - Rakesh Gupta
 - Akhilesh Bhoria
 
-## Project Overview
+## About the Project
 
-This project evaluates different GPU implementations of graph algorithms using CUDA.
+In this project, we are implementing and comparing different graph algorithms on the CPU and GPU using CUDA.
 
-Algorithms planned:
+We are mainly looking at how different graph representations and parallelization approaches affect the performance of graph algorithms.
+
+The algorithms included in our project are:
 - Breadth-First Search (BFS)
-- Single-Source Shortest Paths (SSSP), using Bellman-Ford
+- Single-Source Shortest Paths (SSSP)
 - PageRank
 
-## Current Implementation Status
+We have implemented different versions of these algorithms and are comparing their execution times and correctness.
 
-### Graph Representations
-- CSR (Compressed Sparse Row)
-- CSC (Compressed Sparse Column)
-- COO (Coordinate Format)
+## Graph Representations
 
-### BFS Implementations
+We use three different representations for storing graphs:
 
-Implementation | Representation
-CPU reference | CSR |
-GPU vertex-centric Push | CSR |
-GPU vertex-centric Pull | CSC |
-GPU edge-centric | COO |
+- **CSR (Compressed Sparse Row)**
+- **CSC (Compressed Sparse Column)**
+- **COO (Coordinate Format)**
 
-All three GPU implementations have been validated against the CPU reference.
+These representations are used depending on the algorithm and the type of traversal being performed.
 
-PageRank implementation is not yet included.
+## BFS Implementations
+
+We implemented three GPU versions of BFS, along with a CPU reference implementation.
+
+| Implementation | Graph Representation |
+
+| CPU BFS | CSR |
+
+| GPU Vertex-centric Push | CSR |
+
+| GPU Vertex-centric Pull | CSC |
+
+| GPU Edge-centric | COO |
+
+All three GPU implementations were tested against the CPU version, and the results matched for our test graphs.
 
 ## Dataset
 
-The medium-sized benchmark uses the Wiki-Vote dataset from Stanford SNAP.
+For benchmarking, we use the Wiki-Vote dataset from the Stanford SNAP collection.
 
-Source: https://snap.stanford.edu/data/wiki-Vote.html
+Dataset link: https://snap.stanford.edu/data/wiki-Vote.html
+
+The dataset contains:
 
 - Vertices: 7,115
 - Directed edges: 103,689
 
-Original vertex IDs are remapped to consecutive IDs. All edge weights are set to 1.
+We remapped the original vertex IDs to consecutive IDs so that they can be used easily in our implementation.
 
-A small test graph is also included.
+For BFS, all edge weights are set to 1.
 
-## Input Format
+We have also included a small test graph for checking the implementations.
 
-The graph file begins with the number of vertices and edges, followed by directed edges:
+### Input Format
 
-    V E
-    source destination weight
+The graph file starts with the number of vertices and edges, followed by the edge information.
 
-## Requirements
+```text
+V E
+source destination weight
+```
+
+## Compilation and Execution
+
+The project requires:
 
 - Linux
 - C++17 compiler
 - NVIDIA CUDA Toolkit
-- CUDA-capable NVIDIA GPU
+- CUDA-compatible NVIDIA GPU
 
-## Compilation
+We compiled the project using `g++` for the CPU files and `nvcc` for CUDA files.
 
-Run from the project root:
+### BFS Compilation
 
-    g++ -std=c++17 -Wall -Wextra -Iinclude -c src/graph.cpp -o graph.o
+Run the following commands from the project root:
 
-    g++ -std=c++17 -Wall -Wextra -Iinclude -c src/bfs_cpu.cpp -o bfs_cpu.o
+```bash
+g++ -std=c++17 -Wall -Wextra -Iinclude -c src/graph.cpp -o graph.o
 
-    nvcc -std=c++17 -arch=sm_86 -Iinclude src/bfs.cu src/bfs_benchmark.cu graph.o bfs_cpu.o -o bfs_benchmark
+g++ -std=c++17 -Wall -Wextra -Iinclude -c src/bfs_cpu.cpp -o bfs_cpu.o
 
-The `sm_86` architecture flag was used for the NVIDIA RTX 3050 Laptop GPU.
+nvcc -std=c++17 -arch=sm_86 -Iinclude \
+src/bfs.cu src/bfs_benchmark.cu graph.o bfs_cpu.o \
+-o bfs_benchmark
+```
 
-## Running
+### Running BFS
 
-    ./bfs_benchmark data/wiki_vote_graph.txt 0
+```bash
+./bfs_benchmark data/wiki_vote_graph.txt 0
+```
 
-The program reports kernel time, total execution time, iteration count and correctness.
+The program prints the kernel execution time, total execution time, number of iterations and correctness result.
 
-## Preliminary BFS Results
+## BFS Results
 
-GPU: NVIDIA GeForce RTX 3050 Laptop GPU
+**GPU:** NVIDIA GeForce RTX 3050 Laptop GPU  
+**Dataset:** Wiki-Vote
 
-Dataset: Wiki-Vote
+The following are the results from our current implementation.
 
- Implementation      | Kernel time (ms) | Total time (ms) | Correctness
- 
- Vertex-centric Push | 0.905056 | 10.0621 | PASSED |
- 
- Vertex-centric Pull | 0.546656 | 6.40812 | PASSED |
- 
- Edge-centric        | 0.208896 | 7.98741 | PASSED |
+| Implementation | Kernel Time (ms) | Total Time (ms) | Correctness |
 
-These are preliminary single-run measurements after one warm-up execution of each implementation. They are not statistically conclusive.
+| Vertex-centric Push | 0.905056 | 10.0621 | Passed |
 
-Kernel time is accumulated GPU kernel execution time. Total time includes GPU allocation, transfers, synchronization and cleanup. Graph loading and graph-format construction are excluded.
+| Vertex-centric Pull | 0.546656 | 6.40812 | Passed |
 
+| Edge-centric | 0.208896 | 7.98741 | Passed |
+
+The edge-centric implementation has the lowest kernel time in this run. However, its total execution time is higher than the pull implementation.
+
+This shows that kernel execution time alone does not tell the complete story. The time spent in memory allocation, data transfers and other operations also affects the total time.
+
+These timings were recorded after one warm-up execution of each implementation. We have not performed enough repeated runs to draw a final conclusion about the performance differences.
+
+Kernel time is the accumulated GPU kernel execution time. Total time includes GPU allocation, data transfers, synchronization and cleanup. Graph loading and graph-format construction are excluded.
+
+---
 
 ## Single-Source Shortest Paths (SSSP)
 
-SSSP is implemented using the Bellman-Ford algorithm.
+For SSSP, we implemented the Bellman-Ford algorithm.
+
+We have a CPU implementation which is used as the reference for checking the GPU results.
 
 ### Implementations
 
-Implementation | Graph representation |
+| Implementation | Graph Representation |
 
+| CPU Bellman-Ford | Edge List |
 
-CPU Bellman-Ford reference | Edge list |
+| GPU Vertex-centric Push | CSR |
 
-GPU Vertex-centric Push | CSR |
+| GPU Edge-centric | COO |
 
-GPU Edge-centric | COO |
+The GPU implementations use synchronous iterations with separate distance arrays. Atomic minimum operations are used to handle cases where multiple threads try to update the distance of the same destination vertex.
 
-The GPU implementations use synchronous iterations with separate distance arrays. Atomic minimum operations handle concurrent updates to destination vertices.
+### Dataset and Weights
 
-### Weighted Dataset
-
-The SSSP benchmark uses the Wiki-Vote graph topology with deterministic synthetic edge weights from 1 to 10.
+For this experiment, we use the Wiki-Vote graph topology with synthetic edge weights.
 
 - Vertices: 7,115
 - Directed edges: 103,689
 - Weight range: 1 to 10
 
-These weights are synthetic and are not part of the original Wiki-Vote dataset.
+The original Wiki-Vote dataset does not contain these weights. We generated them deterministically for our SSSP experiments.
 
-### Preliminary SSSP Results
+### SSSP Results
 
-GPU: NVIDIA GeForce RTX 3050 Laptop GPU
+**GPU:** NVIDIA GeForce RTX 3050 Laptop GPU
 
-Implementation | Kernel time (ms) | Total time (ms) | Correctness |
+| Implementation | Kernel Time (ms) | Total Time (ms) | Correctness |
 
+| GPU Vertex-centric Push | 2.17466 | 4.48858 | Passed |
 
-GPU Vertex-centric Push | 2.17466 | 4.48858 | PASSED |
+| GPU Edge-centric | 0.249792 | 2.3073 | Passed |
 
-GPU Edge-centric | 0.249792 | 2.3073 | PASSED |
+Both GPU implementations produced results matching the CPU Bellman-Ford reference for the tested graph.
 
-Both GPU implementations matched the CPU Bellman-Ford reference.
+The edge-centric implementation had lower kernel and total execution times in this run.
 
-These are preliminary measurements from a single run after GPU warm-up, not statistically conclusive performance results.
+These are single-run measurements after GPU warm-up, so more runs are required before making a strong performance comparison.
 
-### Compilation and Execution
+### Compilation
 
-    nvcc -std=c++17 -arch=sm_86 -Iinclude \
-    src/graph.cpp src/sssp_cpu.cpp \
-    src/sssp.cu src/sssp_benchmark.cpp \
-    -o sssp_benchmark
+```bash
+nvcc -std=c++17 -arch=sm_86 -Iinclude \
+src/graph.cpp src/sssp_cpu.cpp \
+src/sssp.cu src/sssp_benchmark.cpp \
+-o sssp_benchmark
+```
 
-    ./sssp_benchmark data/sssp_tiny_graph.txt 0
+### Running SSSP
 
-    ./sssp_benchmark data/wiki_vote_weighted.txt 0
+For the small test graph:
+
+```bash
+./sssp_benchmark data/sssp_tiny_graph.txt 0
+```
+
+For Wiki-Vote:
+
+```bash
+./sssp_benchmark data/wiki_vote_weighted.txt 0
+```
+
+---
+
+## PageRank
+
+We have also implemented PageRank on both CPU and GPU.
+
+For the GPU implementation, we tried two approaches:
+
+- Vertex-centric Push using CSR.
+- Vertex-centric Pull using CSC.
+
+### Implementations
+
+| Implementation | Graph Representation |
+
+| CPU Reference | CSR |
+
+| GPU Vertex-centric Push | CSR |
+
+| GPU Vertex-centric Pull | CSC |
+
+### Parameters Used
+
+| Parameter | Value |
+
+| Damping factor | 0.85 |
+
+| Convergence tolerance | 0.000001 |
+
+| Maximum iterations | 100 |
+
+| Initial rank of each vertex | 1/V |
+
+We also handled dangling vertices. These are vertices which do not have any outgoing edges.
+
+Their rank contribution is redistributed equally among all vertices during the PageRank computation.
+
+### PageRank Results
+
+**GPU:** NVIDIA GeForce RTX 3050 Laptop GPU  
+**Dataset:** Wiki-Vote
+
+| Implementation | Kernel Time (ms) | Total Time (ms) | Correctness |
+
+| GPU Push | 10.0729 | 12.6024 | Passed |
+
+| GPU Pull | 10.2363 | 12.9245 | Passed |
+
+Both implementations were compared with the CPU reference. The L1 error was below 0.000001 for both versions.
+
+The sum of PageRank values was approximately 0.999986.
+
+The results are from single runs after warm-up. More repeated measurements are needed for a proper performance comparison.
+
+### Compilation
+
+```bash
+nvcc -std=c++17 -arch=sm_86 -Iinclude \
+src/graph.cpp src/pagerank_cpu.cpp \
+src/pagerank.cu src/pagerank_benchmark.cpp \
+-o pagerank_benchmark
+```
+
+### Running PageRank
+
+For the small graph:
+
+```bash
+./pagerank_benchmark data/tiny_graph.txt
+```
+
+For Wiki-Vote:
+
+```bash
+./pagerank_benchmark data/wiki_vote_graph.txt
+```
+
+---
+
+## Current Status
+
+So far, we have implemented and tested BFS, SSSP and PageRank using different approaches.
+
+The GPU implementations have been checked against the corresponding CPU reference implementations, and the tested results matched within the specified correctness criteria.
+
+We have also collected initial timing results on the RTX 3050 Laptop GPU. These results give us an initial idea of how the different implementations perform, but further repeated runs and profiling would be needed to make more reliable comparisons.
+
+The main focus of the project is to understand how graph representation and the way we distribute work among GPU threads affect the execution of graph algorithms.
